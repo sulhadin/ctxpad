@@ -1,0 +1,34 @@
+{
+  "name": "ctxpad",
+  "version": "1.0.0",
+  "description": "Ephemeral, per-session context tracking for AI coding agents that read AGENTS.md. Zero deps.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sulhadin/ctxpad.git"
+  },
+  "homepage": "https://github.com/sulhadin/ctxpad#readme",
+  "bugs": {
+    "url": "https://github.com/sulhadin/ctxpad/issues"
+  },
+  "license": "MIT",
+  "type": "commonjs",
+  "author": "Sulhadin <sulhadin@gmail.com>",
+  "bin": "bin/cli.js",
+  "files": [
+    "bin",
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": [
+    "agents.md",
+    "ai-agent",
+    "context",
+    "claude-code",
+    "gemini-cli",
+    "session-memory"
+  ]
+}

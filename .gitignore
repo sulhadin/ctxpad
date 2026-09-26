@@ -1,0 +1,11 @@
+node_modules/
+*.tgz
+.DS_Store
+
+# JetBrains IDE
+.idea/
+
+# Yarn (this package has zero deps; no package manager artifacts belong here)
+.pnp.*
+.yarn/
+yarn.lock
