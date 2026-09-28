@@ -109,12 +109,24 @@ function cmdStatus() {
       .filter((l) => l.startsWith('- ')).length;
   };
 
+  const countChecklist = (heading) => {
+    const re = new RegExp(`## ${heading}\\n([\\s\\S]*?)(\\n## |$)`);
+    const m = content.match(re);
+    if (!m) return { pending: 0, done: 0 };
+    const lines = m[1].split('\n').map((l) => l.trim());
+    const pending = lines.filter((l) => l.startsWith('- [ ]')).length;
+    const done = lines.filter((l) => /^- \[[xX]\]/.test(l)).length;
+    return { pending, done };
+  };
+  const beforeDeploy = countChecklist('Before deploy');
+
   log(`session: .ctx/${SESSION_FILE}`);
   log(`status: ${statusMatch ? statusMatch[1] : 'unknown'}`);
   log(`started: ${startedMatch ? startedMatch[1] : 'unknown'}`);
   log(`decisions: ${countLines('Decisions')}`);
   log(`rejected: ${countLines('Rejected')}`);
   log(`open questions: ${countLines('Open questions')}`);
+  log(`before deploy: ${beforeDeploy.pending} pending, ${beforeDeploy.done} done`);
   log(`AGENTS.md wired: ${wired ? 'yes' : 'no'}`);
 }
 

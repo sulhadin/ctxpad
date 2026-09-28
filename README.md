@@ -22,7 +22,8 @@ scratch pad that lives for *this* piece of work and then disappears.
 `ctxpad init` does three things in the current repo:
 
 1. Creates `.ctx/session.md` — a small markdown file with sections for
-   Goal, Current state, Decisions, Rejected, Open questions, and a Log.
+   Goal, Current state, Decisions, Rejected, Open questions, Before deploy,
+   and a Log.
 2. Adds `.ctx/` to `.gitignore` — nothing here is meant to be committed.
 3. Appends a short instruction block to `AGENTS.md` (creating it if it
    doesn't exist) telling the agent to read `.ctx/session.md` at the start
@@ -91,6 +92,7 @@ started: 2026-09-26T09:12:03.000Z
 decisions: 4
 rejected: 2
 open questions: 1
+before deploy: 2 pending, 1 done
 AGENTS.md wired: yes
 
 $ npx ctxpad clear
