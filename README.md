@@ -31,9 +31,9 @@ scratch pad that lives for *this* piece of work and then disappears.
 Your agent then keeps that file updated for you as you work — you don't
 edit it by hand (though you can).
 
-When the session is over, `ctxpad stop` removes the block from
-`AGENTS.md` and archives (or deletes) the session file. Your repo is left
-exactly as it was.
+When the session is over, `ctxpad clear` wipes the session data but
+leaves `AGENTS.md` wired for next time; `ctxpad remove` tears everything
+down. Your repo is left exactly as it was.
 
 ## Install
 
@@ -56,15 +56,20 @@ ctxpad init
 ctxpad init [--force]   Create .ctx/session.md and wire AGENTS.md to it
 ctxpad show             Print the current session context
 ctxpad status           One-line summary (decisions/rejected/open counts)
-ctxpad stop [options]   Unwire AGENTS.md and retire the session file
+ctxpad clear [options]  Wipe session data, leave AGENTS.md wired
+ctxpad remove           Full teardown: unwire AGENTS.md and delete .ctx/
 ```
 
-`stop` options:
+`clear` options:
 
 ```
---keep     Remove the AGENTS.md block but leave .ctx/session.md as is
---purge    Delete .ctx/session.md instead of archiving it to .ctx/archive/
+--keep-session   Don't touch .ctx/session.md, only clear .ctx/archive/
+--keep-archive   Don't touch .ctx/archive/, only clear .ctx/session.md
+(with neither flag, both are wiped; with both, there's nothing to do)
 ```
+
+`remove` takes no options — it unwires `AGENTS.md`, deletes `.ctx/`
+entirely, and removes the `.ctx/` entry it added to `.gitignore`.
 
 ## Example
 
@@ -88,16 +93,23 @@ rejected: 2
 open questions: 1
 AGENTS.md wired: yes
 
-$ npx ctxpad stop
+$ npx ctxpad clear
+deleted .ctx/session.md
+deleted .ctx/archive/
+
+AGENTS.md left untouched — run "ctxpad init" to start a fresh session.
+
+$ npx ctxpad remove
 removed the ctxpad block from AGENTS.md
-archived session to .ctx/archive/session-2026-09-26T14-40-00-000Z.md
+deleted .ctx/
+removed the .ctx/ entry from .gitignore
 ```
 
 ## What it is not
 
 - Not a replacement for real project documentation. If a decision matters
   beyond this session, write it into your actual docs before you run
-  `ctxpad stop`.
+  `ctxpad clear` or `ctxpad remove`.
 - Not multi-session memory. There's no concept of resuming a *different*
   unit of work later, no closure/anchor bookkeeping, no dispatch model.
   One repo, one live session file, append until you're done.

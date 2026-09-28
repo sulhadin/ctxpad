@@ -7,11 +7,12 @@ const path = require('path');
 const { CTX_DIR, SESSION_FILE, ARCHIVE_DIR, AGENTS_FILE } = require('../lib/constants');
 const { sessionTemplate } = require('../lib/template');
 const { hasBlock, upsertBlock, removeBlock, readAgentsFile } = require('../lib/agents');
-const { ensureIgnored } = require('../lib/gitignore');
+const { ensureIgnored, removeIgnored } = require('../lib/gitignore');
 
 const cwd = process.cwd();
 const ctxDirPath = path.join(cwd, CTX_DIR);
 const sessionPath = path.join(ctxDirPath, SESSION_FILE);
+const archiveDirPath = path.join(ctxDirPath, ARCHIVE_DIR);
 const agentsPath = path.join(cwd, AGENTS_FILE);
 const gitignorePath = path.join(cwd, '.gitignore');
 
@@ -31,11 +32,13 @@ Usage:
   ctxpad init [--force]   Create .ctx/session.md and wire AGENTS.md to it
   ctxpad show             Print the current session context
   ctxpad status           One-line summary of the current session
-  ctxpad stop [options]   Unwire AGENTS.md and retire the session file
+  ctxpad clear [options]  Wipe session data, leave AGENTS.md wired
+  ctxpad remove           Full teardown: unwire AGENTS.md and delete .ctx/
 
-Options for stop:
-  --keep     Remove the AGENTS.md block but leave .ctx/session.md as is
-  --purge    Delete .ctx/session.md instead of archiving it
+Options for clear:
+  --keep-session   Don't touch .ctx/session.md, only clear .ctx/archive/
+  --keep-archive   Don't touch .ctx/archive/, only clear .ctx/session.md
+  (with neither flag, both are wiped; with both, there's nothing to do)
 
 Notes:
   - .ctx/ is added to .gitignore automatically; nothing here is meant to be committed.
@@ -115,45 +118,71 @@ function cmdStatus() {
   log(`AGENTS.md wired: ${wired ? 'yes' : 'no'}`);
 }
 
-function cmdStop(args) {
-  const keep = args.includes('--keep');
-  const purge = args.includes('--purge');
+function rimraf(targetPath) {
+  if (!fs.existsSync(targetPath)) return false;
+  fs.rmSync(targetPath, { recursive: true, force: true });
+  return true;
+}
+
+function cmdClear(args) {
+  const keepSession = args.includes('--keep-session');
+  const keepArchive = args.includes('--keep-archive');
+
+  if (keepSession && keepArchive) {
+    log('both --keep-session and --keep-archive given — nothing to clear.');
+    return;
+  }
+
+  let didSomething = false;
+
+  if (!keepSession) {
+    if (rimraf(sessionPath)) {
+      log(`deleted .ctx/${SESSION_FILE}`);
+      didSomething = true;
+    }
+  }
+
+  if (!keepArchive) {
+    if (rimraf(archiveDirPath)) {
+      log(`deleted .ctx/${ARCHIVE_DIR}/`);
+      didSomething = true;
+    }
+  }
+
+  if (!didSomething) {
+    log('nothing to clear.');
+    return;
+  }
+
+  log('');
+  log(`${AGENTS_FILE} left untouched — run "ctxpad init" to start a fresh session.`);
+}
+
+function cmdRemove() {
+  let didSomething = false;
 
   if (fs.existsSync(agentsPath)) {
     const content = readAgentsFile(agentsPath);
     if (hasBlock(content)) {
-      const updated = removeBlock(content);
-      fs.writeFileSync(agentsPath, updated);
+      fs.writeFileSync(agentsPath, removeBlock(content));
       log(`removed the ctxpad block from ${AGENTS_FILE}`);
-    } else {
-      log(`${AGENTS_FILE} has no ctxpad block — nothing to remove`);
+      didSomething = true;
     }
   }
 
-  if (!fs.existsSync(sessionPath)) {
-    log(`no .ctx/${SESSION_FILE} found — nothing to retire`);
-    return;
+  if (rimraf(ctxDirPath)) {
+    log('deleted .ctx/');
+    didSomething = true;
   }
 
-  if (keep) {
-    log(`left .ctx/${SESSION_FILE} in place (--keep)`);
-    return;
+  if (removeIgnored(gitignorePath)) {
+    log('removed the .ctx/ entry from .gitignore');
+    didSomething = true;
   }
 
-  if (purge) {
-    fs.unlinkSync(sessionPath);
-    log(`deleted .ctx/${SESSION_FILE}`);
-    return;
+  if (!didSomething) {
+    log('nothing to remove — ctxpad was not set up in this repo.');
   }
-
-  const archiveDirPath = path.join(ctxDirPath, ARCHIVE_DIR);
-  if (!fs.existsSync(archiveDirPath)) {
-    fs.mkdirSync(archiveDirPath, { recursive: true });
-  }
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const archivePath = path.join(archiveDirPath, `session-${stamp}.md`);
-  fs.renameSync(sessionPath, archivePath);
-  log(`archived session to .ctx/${ARCHIVE_DIR}/session-${stamp}.md`);
 }
 
 function main() {
@@ -169,8 +198,17 @@ function main() {
     case 'status':
       cmdStatus();
       break;
+    case 'clear':
+      cmdClear(rest);
+      break;
+    case 'remove':
+      cmdRemove();
+      break;
     case 'stop':
-      cmdStop(rest);
+      fail(
+        '"stop" was replaced. Use "ctxpad clear" (wipe session data, keep AGENTS.md wired) ' +
+          'or "ctxpad remove" (full teardown: unwire AGENTS.md and delete .ctx/).'
+      );
       break;
     case '--help':
     case '-h':
