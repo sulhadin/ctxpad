@@ -36,6 +36,24 @@ When the session is over, `ctxpad clear` wipes the session data but
 leaves `AGENTS.md` wired for next time; `ctxpad remove` tears everything
 down. Your repo is left exactly as it was.
 
+## Format
+
+Decisions and Rejected lines follow one shape, written the moment it
+happens, not batched at the end of the session:
+
+```
+- <specific what> — because <specific why>
+```
+
+Name the actual file, function, config key, or endpoint involved, not
+"this approach" or "that way" — one concrete sentence, roughly 15-25
+words, enough to mean something on a cold read months later:
+
+```
+- Moved token refresh to a 15min interval in useAuth.ts — because 5min
+  was hitting the /refresh endpoint's staging rate limit
+```
+
 ## Install
 
 No install needed — run it with `npx` from the repo root:
